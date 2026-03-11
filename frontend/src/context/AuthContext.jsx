@@ -1,23 +1,39 @@
+/* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useContext, useEffect, useState } from 'react';
 
 const AuthContext = createContext(null);
 
 const STORAGE_KEY = 'marketplace_auth';
 
+function getInitialAuth() {
+  if (typeof window === 'undefined') {
+    return { user: null, token: null };
+  }
+
+  const stored = window.localStorage.getItem(STORAGE_KEY);
+  if (!stored) {
+    return { user: null, token: null };
+  }
+
+  try {
+    const parsed = JSON.parse(stored);
+    return {
+      user: parsed.user ?? null,
+      token: parsed.token ?? null,
+    };
+  } catch {
+    return { user: null, token: null };
+  }
+}
+
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
-  const [token, setToken] = useState(null);
+  const initial = getInitialAuth();
+  const [user, setUser] = useState(initial.user);
+  const [token, setToken] = useState(initial.token);
 
   useEffect(() => {
-    const stored = window.localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      const parsed = JSON.parse(stored);
-      setUser(parsed.user ?? null);
-      setToken(parsed.token ?? null);
-    }
-  }, []);
+    if (typeof window === 'undefined') return;
 
-  useEffect(() => {
     if (token && user) {
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ token, user }));
     } else {
